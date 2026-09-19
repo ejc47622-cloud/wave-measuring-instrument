@@ -1,0 +1,1618 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>활동 1 소리 비교</title>
+<style>
+  :root {
+    --bg: #f4f7f4;
+    --panel: #ffffff;
+    --line: #d9e3da;
+    --line-strong: #aebfaf;
+    --text: #1f2a22;
+    --muted: #657168;
+    --green: #2f6b45;
+    --green-dark: #234f35;
+    --green-soft: #e7f0e9;
+    --danger: #8b3f37;
+    --disabled: #d8ded9;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR", sans-serif;
+    overflow: hidden;
+  }
+  button, input, select, textarea { font: inherit; }
+  button, select, input, textarea { border-radius: 8px; }
+  button {
+    border: 1px solid var(--line-strong);
+    background: #fff;
+    color: var(--text);
+    min-height: 40px;
+    padding: 8px 12px;
+    cursor: pointer;
+    font-weight: 650;
+  }
+  button:hover:not(:disabled) { border-color: var(--green); }
+  button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+    outline: 3px solid rgba(47, 107, 69, .22);
+    outline-offset: 1px;
+  }
+  button:disabled { cursor: not-allowed; color: #6e776f; background: var(--disabled); }
+  input, select, textarea {
+    width: 100%;
+    border: 1px solid var(--line-strong);
+    background: #fff;
+    color: var(--text);
+    padding: 9px 10px;
+    min-height: 40px;
+  }
+  textarea { min-height: 145px; resize: vertical; line-height: 1.5; }
+  .app { height: 100%; display: grid; grid-template-rows: 48px minmax(0, 1fr); }
+  header {
+    display: flex;
+    align-items: center;
+    padding: 0 18px;
+    border-bottom: 1px solid var(--line);
+    background: var(--panel);
+    font-size: 16px;
+    font-weight: 750;
+  }
+  .layout {
+    min-height: 0;
+    display: grid;
+    grid-template-columns: 150px minmax(520px, 1fr) 280px;
+    gap: 12px;
+    padding: 12px;
+  }
+  .side, .center, .notes {
+    min-height: 0;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+  }
+  .side { padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+  .tab {
+    width: 100%;
+    text-align: left;
+    border-color: transparent;
+    background: transparent;
+    min-height: 46px;
+  }
+  .tab.active {
+    background: var(--green-soft);
+    border-color: var(--green);
+    color: var(--green-dark);
+    font-weight: 800;
+  }
+  .center { padding: 12px; overflow: auto; display: flex; flex-direction: column; gap: 10px; }
+  .notes { padding: 12px; overflow: auto; display: flex; flex-direction: column; gap: 10px; }
+  .live-wave { min-height: 0; display: flex; flex-direction: column; gap: 5px; flex: 1; }
+  .live-wave-label { font-size: 13px; font-weight: 750; color: var(--muted); }
+  .live-canvas-wrap { min-height: 180px; flex: 1; border: 1px solid var(--line); border-radius: 7px; overflow: hidden; background: #fcfdfc; }
+  .field-grid { display: grid; grid-template-columns: minmax(180px, 1fr); gap: 10px; }
+  .instrument-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .field label, .notes label { display: block; margin-bottom: 5px; font-size: 13px; font-weight: 750; color: var(--muted); }
+  .mic-row { display: grid; grid-template-columns: 76px minmax(180px, 1fr) auto auto auto; align-items: end; gap: 8px; }
+  .mic-row .field { min-width: 0; }
+  .mic-label { align-self: center; font-size: 13px; font-weight: 750; color: var(--muted); padding-top: 18px; }
+  .status {
+    min-height: 28px;
+    display: flex;
+    align-items: center;
+    padding: 4px 2px;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--green-dark);
+  }
+  .status.error { color: var(--danger); }
+  .wave-grid { min-height: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; flex: 1; }
+  .wave-card {
+    min-width: 0;
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    padding: 10px;
+    display: grid;
+    grid-template-rows: auto minmax(210px, 1fr);
+    gap: 8px;
+  }
+  .wave-top { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 8px; }
+  .wave-name { font-weight: 800; font-size: 15px; }
+  .measure-actions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+  .measure-primary { background: var(--green); color: #fff; border-color: var(--green); }
+  .measure-primary:hover:not(:disabled) { background: var(--green-dark); }
+  .direct-btn { display: none; }
+  .direct-btn.show { display: inline-flex; align-items: center; }
+  .canvas-wrap { min-height: 210px; border: 1px solid var(--line); border-radius: 7px; overflow: hidden; background: #fcfdfc; }
+  canvas { display: block; width: 100%; height: 100%; }
+  .range-row { display: flex; justify-content: flex-end; align-items: center; gap: 8px; }
+  .range-row label { color: var(--muted); font-size: 13px; font-weight: 750; }
+  .range-row select { width: 110px; }
+  .save-wave { background: var(--green-soft); border-color: var(--green); color: var(--green-dark); }
+  .reset { margin-top: auto; align-self: flex-start; background: transparent; }
+  .mic-on { background: var(--green-soft); border-color: var(--green); color: var(--green-dark); }
+  .hidden { display: none !important; }
+  @media (max-width: 950px) {
+    body { overflow: auto; }
+    .app { height: auto; min-height: 100%; }
+    .layout { grid-template-columns: 1fr; }
+    .side, .center, .notes { overflow: visible; }
+    .side { flex-direction: row; }
+    .tab { text-align: center; }
+    .field-grid, .instrument-grid, .wave-grid { grid-template-columns: 1fr; }
+    .mic-row { grid-template-columns: 1fr 1fr; }
+    .mic-label { grid-column: 1 / -1; padding-top: 0; }
+    .mic-row .field { grid-column: 1 / -1; }
+    .wave-card { grid-template-rows: auto 240px; }
+    textarea { min-height: 140px; }
+    .live-canvas-wrap { min-height: 210px; }
+  }
+  @media (max-width: 560px) {
+    .layout { padding: 8px; gap: 8px; }
+    .side { display: grid; grid-template-columns: repeat(3, 1fr); }
+    .center, .notes { padding: 10px; }
+    .mic-row { grid-template-columns: 1fr; }
+    .mic-row > * { width: 100%; }
+    .wave-top { grid-template-columns: 1fr; }
+    .measure-actions { justify-content: flex-start; }
+  }
+
+
+  /* 파동 셀 음악 실험실 디자인 톤 적용: 기능/문구는 기존 그대로 유지 */
+  :root {
+    --bg: #f6f1e7;
+    --panel: rgba(255, 250, 240, 0.82);
+    --line: rgba(23, 47, 56, 0.18);
+    --line-strong: rgba(23, 47, 56, 0.28);
+    --text: #172f38;
+    --muted: #5f6f72;
+    --green: #ef705c;
+    --green-dark: #ce5142;
+    --green-soft: rgba(239, 112, 92, 0.10);
+    --danger: #b44538;
+    --disabled: #e8e0d5;
+    --cream: #fffaf0;
+    --ink: #172f38;
+    --coral: #ef705c;
+    --coral-dark: #ce5142;
+  }
+
+  html { background: var(--bg); }
+  body {
+    background:
+      radial-gradient(circle at 14% 3%, rgba(239, 112, 92, 0.13), transparent 26rem),
+      linear-gradient(rgba(23, 47, 56, 0.035) 1px, transparent 1px),
+      var(--bg);
+    background-size: auto, 100% 32px, auto;
+    color: var(--text);
+    font-family: "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  .app {
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  header {
+    position: relative;
+    min-height: 72px;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+    padding-left: max(24px, calc((100vw - 1680px) / 2));
+    padding-right: max(24px, calc((100vw - 1680px) / 2));
+    border-bottom: 1px solid var(--line);
+    background: rgba(246, 241, 231, 0.78);
+    backdrop-filter: blur(14px);
+    color: var(--ink);
+    font-size: 18px;
+    font-weight: 850;
+    letter-spacing: -0.035em;
+  }
+
+  .header-title {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+
+  .header-tools {
+    min-width: 0;
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+
+  .header-group,
+  .header-mic {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .header-group label,
+  .header-mic label {
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 850;
+    white-space: nowrap;
+  }
+
+  .header-group input {
+    width: 70px;
+  }
+
+  .header-mic select {
+    width: 180px;
+  }
+
+  .header-tools input,
+  .header-tools select,
+  .header-tools button {
+    min-height: 38px;
+    height: 38px;
+    padding-top: 6px;
+    padding-bottom: 6px;
+    font-size: 13px;
+  }
+
+  .header-tools button {
+    padding-left: 10px;
+    padding-right: 10px;
+    white-space: nowrap;
+  }
+
+  header::before {
+    content: "";
+    width: 36px;
+    height: 36px;
+    margin-right: 11px;
+    flex: 0 0 36px;
+    border-radius: 50%;
+    background: var(--ink);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.08);
+  }
+
+  header::after {
+    content: "∿";
+    position: absolute;
+    left: max(32px, calc((100vw - 1680px) / 2 + 8px));
+    top: 19px;
+    width: 20px;
+    color: var(--bg);
+    font-family: Georgia, serif;
+    font-size: 24px;
+    line-height: 34px;
+    text-align: center;
+    pointer-events: none;
+  }
+
+  .teacher-link {
+    position: absolute;
+    left: max(24px, calc((100vw - 1680px) / 2));
+    top: 18px;
+    z-index: 2;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+  }
+
+  .teacher-link:focus-visible {
+    outline: 3px solid rgba(239, 112, 92, .32);
+    outline-offset: 3px;
+  }
+
+  .layout {
+    width: min(1680px, calc(100% - 32px));
+    margin: 0 auto;
+    grid-template-columns: 150px minmax(720px, 1fr) 280px;
+    gap: 14px;
+    padding: 16px 0 18px;
+  }
+
+  .side, .center, .notes {
+    border: 1px solid var(--line);
+    border-radius: 22px;
+    background: var(--panel);
+    box-shadow: 0 18px 46px rgba(23, 47, 56, 0.075);
+    backdrop-filter: blur(12px);
+  }
+
+  .side {
+    gap: 10px;
+    padding: 14px;
+  }
+
+  .tab {
+    min-height: 48px;
+    padding: 0 14px;
+    border: 1px solid transparent;
+    border-radius: 13px;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 850;
+    transition: transform 150ms ease, border-color 150ms ease, background 150ms ease, color 150ms ease;
+  }
+
+  .tab:hover:not(:disabled) {
+    transform: translateY(-1px);
+    border-color: var(--line-strong);
+    background: rgba(255,255,255,.38);
+  }
+
+  .tab.active {
+    border-color: var(--ink);
+    background: var(--ink);
+    color: #fff;
+    box-shadow: 0 10px 24px rgba(23,47,56,.14);
+  }
+
+  .activity2-link {
+    min-height: 48px;
+    margin-top: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 14px;
+    border: 1px solid var(--coral-dark);
+    border-radius: 13px;
+    background: rgba(239,112,92,.10);
+    color: var(--coral-dark);
+    font-size: 13px;
+    font-weight: 900;
+    text-decoration: none;
+    transition: transform 150ms ease, background 150ms ease;
+  }
+
+  .activity2-link:hover {
+    transform: translateY(-1px);
+    background: rgba(239,112,92,.18);
+  }
+
+  .activity2-link:focus-visible {
+    outline: 3px solid rgba(239,112,92,.28);
+    outline-offset: 2px;
+  }
+
+  .center, .notes {
+    padding: 16px;
+    gap: 12px;
+  }
+
+  button, input, select, textarea {
+    border-radius: 12px;
+  }
+
+  button {
+    min-height: 44px;
+    padding: 9px 14px;
+    border: 1px solid var(--line-strong);
+    background: rgba(255, 250, 240, 0.84);
+    color: var(--ink);
+    font-weight: 850;
+    transition: transform 150ms ease, border-color 150ms ease, background 150ms ease, box-shadow 150ms ease;
+  }
+
+  button:hover:not(:disabled) {
+    transform: translateY(-1px);
+    border-color: var(--coral);
+    box-shadow: 0 8px 20px rgba(23,47,56,.08);
+  }
+
+  button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+    outline: 3px solid rgba(239, 112, 92, .25);
+    outline-offset: 2px;
+  }
+
+  button:disabled {
+    color: rgba(23,47,56,.42);
+    border-color: rgba(23,47,56,.10);
+    background: rgba(232,224,213,.72);
+  }
+
+  input, select, textarea {
+    min-height: 44px;
+    border: 1px solid var(--line);
+    background: rgba(255, 250, 240, 0.92);
+    color: var(--ink);
+  }
+
+  input:hover, select:hover, textarea:hover { border-color: var(--line-strong); }
+  textarea { line-height: 1.65; }
+
+  .field label, .notes label,
+  .mic-label, .live-wave-label,
+  .range-row label {
+    color: var(--muted);
+    font-weight: 850;
+    letter-spacing: -0.015em;
+  }
+
+  .field-grid, .instrument-grid {
+    gap: 12px;
+  }
+
+  .mic-row {
+    gap: 9px;
+    padding: 14px;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: rgba(255,255,255,.36);
+  }
+
+  .status {
+    min-height: 30px;
+    color: var(--coral-dark);
+    font-size: 13px;
+    font-weight: 800;
+  }
+
+  .status.error { color: var(--danger); }
+
+  .wave-grid {
+    gap: 12px;
+  }
+
+  .wave-card {
+    padding: 12px;
+    grid-template-rows: auto minmax(280px, 1fr);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    background: rgba(255,255,255,.48);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.34);
+    gap: 11px;
+  }
+
+  .wave-name {
+    color: var(--ink);
+    font-size: 17px;
+    font-weight: 900;
+    letter-spacing: -0.035em;
+  }
+
+  .canvas-wrap {
+    min-height: 280px;
+  }
+
+  .canvas-wrap, .live-canvas-wrap {
+    border: 1px solid var(--line);
+    border-radius: 15px;
+    background: rgba(255, 250, 240, .82);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.30);
+  }
+
+  .measure-primary {
+    border-color: var(--coral);
+    background: var(--coral);
+    color: #fff;
+  }
+
+  .measure-primary:hover:not(:disabled) {
+    border-color: var(--coral-dark);
+    background: var(--coral-dark);
+  }
+
+  .direct-btn.show {
+    border-color: var(--line-strong);
+    background: transparent;
+    color: var(--ink);
+  }
+
+  .range-row {
+    padding-top: 2px;
+  }
+
+  .range-row select {
+    background: var(--cream);
+  }
+
+  .save-wave {
+    border-color: var(--ink);
+    background: transparent;
+    color: var(--ink);
+  }
+
+  .save-wave:hover:not(:disabled) {
+    border-color: var(--ink);
+    background: rgba(23,47,56,.07);
+  }
+
+  .notes > div:first-child {
+    padding: 14px;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: rgba(255,255,255,.34);
+  }
+
+  .notes textarea {
+    min-height: 150px;
+    background: rgba(255,250,240,.76);
+  }
+
+  .live-wave {
+    padding: 14px;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: rgba(255,255,255,.34);
+  }
+
+  .reset {
+    border-color: transparent;
+    border-bottom: 1px solid var(--line-strong);
+    border-radius: 0;
+    background: transparent;
+    color: var(--muted);
+    box-shadow: none;
+  }
+
+  .reset:hover:not(:disabled) {
+    transform: none;
+    border-color: transparent;
+    border-bottom-color: var(--coral-dark);
+    color: var(--coral-dark);
+    box-shadow: none;
+  }
+
+  .mic-on {
+    border-color: var(--coral-dark);
+    background: rgba(239,112,92,.10);
+    color: var(--coral-dark);
+  }
+
+  @media (max-width: 1100px) {
+    .header-mic select { width: 140px; }
+    .header-tools { gap: 6px; }
+    .header-tools button { padding-left: 8px; padding-right: 8px; }
+    .layout {
+      width: min(100% - 28px, 1080px);
+      grid-template-columns: 145px minmax(480px, 1fr) 260px;
+      gap: 12px;
+    }
+    .center, .notes { padding: 16px; }
+  }
+
+  @media (max-width: 950px) {
+    body { background-size: auto, 100% 32px, auto; }
+    .app { grid-template-rows: auto auto; }
+    header {
+      min-height: 64px;
+      padding-left: 18px;
+      padding-right: 18px;
+    }
+    header::after { left: 26px; top: 15px; }
+    .teacher-link { left: 18px; top: 14px; }
+    .layout {
+      width: calc(100% - 24px);
+      padding: 14px 0 20px;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+    .side { border-radius: 18px; }
+    .activity2-link { margin-top: 0; margin-left: auto; min-width: 104px; }
+    .center, .notes { border-radius: 20px; }
+  }
+
+  @media (max-width: 560px) {
+    .header-tools {
+      width: calc(100% - 47px);
+      margin-left: 47px;
+      flex-wrap: wrap;
+      justify-content: flex-start;
+    }
+    .header-mic { min-width: 0; flex: 1 1 100%; flex-wrap: wrap; }
+    .header-mic select { width: auto; min-width: 160px; flex: 1 1 180px; }
+    .layout { width: calc(100% - 16px); padding-top: 8px; }
+    .center, .notes { padding: 12px; }
+    .side { padding: 8px; }
+    .tab { min-height: 44px; padding-inline: 8px; }
+    .activity2-link { grid-column: 1 / -1; margin-left: 0; min-height: 44px; }
+    .wave-card { padding: 11px; border-radius: 16px; }
+    .mic-row { padding: 10px; }
+  }
+
+
+  /* 15:29 — 파형 영역과 시간 범위/저장 컨트롤 겹침 방지 */
+  .wave-grid {
+    flex: 0 0 auto;
+    min-height: 390px;
+  }
+
+  .wave-card {
+    min-height: 390px;
+  }
+
+  .range-row {
+    flex: 0 0 auto;
+    position: relative;
+    z-index: 2;
+    margin-top: 2px;
+    padding: 10px 0 2px;
+    background: var(--panel);
+  }
+
+  @media (max-width: 950px) {
+    .wave-grid, .wave-card { min-height: 0; }
+    .range-row { margin-top: 0; padding-top: 8px; }
+  }
+
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <a class="teacher-link" href="/teacher.html" aria-label="선생님 화면으로 이동"></a>
+    <span class="header-title">활동 1 소리 비교</span>
+    <div class="header-tools">
+      <div class="header-group">
+        <label for="groupNumber">조</label>
+        <input id="groupNumber" type="number" min="1" max="99" step="1" inputmode="numeric" placeholder="예: 1" />
+      </div>
+      <div class="header-mic">
+        <label for="micSelect">마이크</label>
+        <select id="micSelect" aria-label="마이크 선택"></select>
+        <button id="micOn">마이크 켜기</button>
+        <button id="micOff" disabled>마이크 끄기</button>
+        <button id="refreshMics">새로고침</button>
+      </div>
+    </div>
+  </header>
+  <main class="layout">
+    <nav class="side" aria-label="탐구 선택">
+      <button class="tab" data-mode="strength">소리의 세기</button>
+      <button class="tab" data-mode="pitch">소리의 높낮이</button>
+      <button class="tab" data-mode="instrument">악기 종류</button>
+      <a class="activity2-link" href="https://waveclass2.netlify.app/">활동2</a>
+    </nav>
+
+    <section class="center">
+      <div id="singleInstrument" class="field-grid">
+        <div class="field">
+          <label for="instrumentName">악기</label>
+          <input id="instrumentName" autocomplete="off" />
+        </div>
+      </div>
+
+      <div id="dualInstrument" class="instrument-grid hidden">
+        <div class="field">
+          <label for="instrumentA">악기 A</label>
+          <input id="instrumentA" autocomplete="off" />
+        </div>
+        <div class="field">
+          <label for="instrumentB">악기 B</label>
+          <input id="instrumentB" autocomplete="off" />
+        </div>
+      </div>
+
+      <div id="status" class="status" aria-live="polite"></div>
+
+      <div class="wave-grid">
+        <article class="wave-card">
+          <div class="wave-top">
+            <div id="labelA" class="wave-name">약하게</div>
+            <div class="measure-actions">
+              <button id="measureA" class="measure-primary">측정</button>
+              <button id="directA" class="direct-btn">직접 포착</button>
+            </div>
+          </div>
+          <div class="canvas-wrap"><canvas id="canvasA"></canvas></div>
+        </article>
+
+        <article class="wave-card">
+          <div class="wave-top">
+            <div id="labelB" class="wave-name">세게</div>
+            <div class="measure-actions">
+              <button id="measureB" class="measure-primary">측정</button>
+              <button id="directB" class="direct-btn">직접 포착</button>
+            </div>
+          </div>
+          <div class="canvas-wrap"><canvas id="canvasB"></canvas></div>
+        </article>
+      </div>
+
+      <div class="range-row">
+        <label for="timeRange">시간 범위</label>
+        <select id="timeRange">
+          <option value="10">10 ms</option>
+          <option value="20">20 ms</option>
+          <option value="40">40 ms</option>
+        </select>
+        <button id="saveWave" class="save-wave">파동 저장</button>
+      </div>
+    </section>
+
+    <aside class="notes">
+      <div>
+        <label for="observation">관찰한 점</label>
+        <textarea id="observation"></textarea>
+      </div>
+      <div class="live-wave">
+        <div class="live-wave-label">실시간 파형</div>
+        <div class="live-canvas-wrap"><canvas id="liveCanvas"></canvas></div>
+      </div>
+      <button id="reset" class="reset">초기화</button>
+    </aside>
+  </main>
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  const STORAGE_KEY = 'waveActivity1.v1';
+  const MIC_KEY = 'waveActivity1.mic';
+  const MODES = {
+    strength: { labels: ['약하게', '세게'] },
+    pitch: { labels: ['낮은 음', '높은 음'] },
+    instrument: { labels: ['악기 A', '악기 B'] }
+  };
+
+  const makeModeState = () => ({
+    instrument: '',
+    instrumentA: '',
+    instrumentB: '',
+    A: null,
+    B: null,
+    observation: '',
+    range: 20
+  });
+
+  const defaultState = () => ({
+    currentMode: 'strength',
+    groupNumber: '',
+    modes: {
+      strength: makeModeState(),
+      pitch: makeModeState(),
+      instrument: makeModeState()
+    }
+  });
+
+  const els = {
+    tabs: [...document.querySelectorAll('.tab')],
+    singleInstrument: document.getElementById('singleInstrument'),
+    dualInstrument: document.getElementById('dualInstrument'),
+    instrumentName: document.getElementById('instrumentName'),
+    instrumentA: document.getElementById('instrumentA'),
+    instrumentB: document.getElementById('instrumentB'),
+    groupNumber: document.getElementById('groupNumber'),
+    micSelect: document.getElementById('micSelect'),
+    micOn: document.getElementById('micOn'),
+    micOff: document.getElementById('micOff'),
+    refreshMics: document.getElementById('refreshMics'),
+    status: document.getElementById('status'),
+    labelA: document.getElementById('labelA'),
+    labelB: document.getElementById('labelB'),
+    measureA: document.getElementById('measureA'),
+    measureB: document.getElementById('measureB'),
+    directA: document.getElementById('directA'),
+    directB: document.getElementById('directB'),
+    canvasA: document.getElementById('canvasA'),
+    canvasB: document.getElementById('canvasB'),
+    timeRange: document.getElementById('timeRange'),
+    saveWave: document.getElementById('saveWave'),
+    observation: document.getElementById('observation'),
+    liveCanvas: document.getElementById('liveCanvas'),
+    reset: document.getElementById('reset')
+  };
+
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(MIC_KEY);
+  } catch (_) {}
+
+  let state = loadState();
+  let stream = null;
+  let audioContext = null;
+  let sourceNode = null;
+  let analyser = null;
+  let isMicOn = false;
+  let capture = null;
+  let captureSerial = 0;
+  let noiseRms = 0.0025;
+  let noiseSamples = [];
+  let noiseStart = 0;
+  let currentDeviceId = '';
+  let currentDeviceLabel = '';
+  let resizeObserver = null;
+  let liveWaveRaf = 0;
+  let liveWaveScale = 0.08;
+
+  function loadState() {
+    try {
+      const raw = sessionStorage.getItem(STORAGE_KEY);
+      if (!raw) return defaultState();
+      const parsed = JSON.parse(raw);
+      const base = defaultState();
+      if (parsed && MODES[parsed.currentMode]) base.currentMode = parsed.currentMode;
+      const parsedGroupNumber = Number(parsed?.groupNumber);
+      if (Number.isSafeInteger(parsedGroupNumber) && parsedGroupNumber >= 1 && parsedGroupNumber <= 99) {
+        base.groupNumber = String(parsedGroupNumber);
+      }
+      for (const mode of Object.keys(MODES)) {
+        const src = parsed?.modes?.[mode];
+        if (!src) continue;
+        base.modes[mode] = {
+          ...base.modes[mode],
+          instrument: typeof src.instrument === 'string' ? src.instrument : '',
+          instrumentA: typeof src.instrumentA === 'string' ? src.instrumentA : '',
+          instrumentB: typeof src.instrumentB === 'string' ? src.instrumentB : '',
+          observation: typeof src.observation === 'string' ? src.observation : '',
+          range: [10, 20, 40].includes(Number(src.range)) ? Number(src.range) : 20,
+          A: validateResult(src.A),
+          B: validateResult(src.B)
+        };
+      }
+      return base;
+    } catch (_) {
+      return defaultState();
+    }
+  }
+
+  function validateResult(r) {
+    if (!r || !Number.isFinite(r.frequency) || !Array.isArray(r.waveform) || !Number.isFinite(r.sampleRate)) return null;
+    return {
+      frequency: Math.max(1, Math.round(r.frequency)),
+      waveform: r.waveform.filter(Number.isFinite).slice(0, 8192),
+      sampleRate: r.sampleRate,
+      deviceId: typeof r.deviceId === 'string' ? r.deviceId : ''
+    };
+  }
+
+  function saveState() {
+    try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (_) {}
+  }
+
+  function saveMicPreference() {
+    try { sessionStorage.setItem(MIC_KEY, els.micSelect.value || ''); } catch (_) {}
+  }
+
+  function getMicPreference() {
+    try { return sessionStorage.getItem(MIC_KEY) || ''; } catch (_) { return ''; }
+  }
+
+  function setStatus(text = '', isError = false) {
+    els.status.textContent = text;
+    els.status.classList.toggle('error', !!isError);
+  }
+
+  function modeState() { return state.modes[state.currentMode]; }
+
+  function renderMode() {
+    const m = modeState();
+    const cfg = MODES[state.currentMode];
+    els.tabs.forEach(btn => btn.classList.toggle('active', btn.dataset.mode === state.currentMode));
+    els.labelA.textContent = cfg.labels[0];
+    els.labelB.textContent = cfg.labels[1];
+    const isInstrument = state.currentMode === 'instrument';
+    els.singleInstrument.classList.toggle('hidden', isInstrument);
+    els.dualInstrument.classList.toggle('hidden', !isInstrument);
+    els.instrumentName.value = m.instrument;
+    els.instrumentA.value = m.instrumentA;
+    els.instrumentB.value = m.instrumentB;
+    els.groupNumber.value = state.groupNumber;
+    els.observation.value = m.observation;
+    els.timeRange.value = String(m.range);
+    els.measureA.textContent = capture?.slot === 'A' ? '취소' : (m.A ? '다시 측정' : '측정');
+    els.measureB.textContent = capture?.slot === 'B' ? '취소' : (m.B ? '다시 측정' : '측정');
+    els.directA.classList.toggle('show', capture?.slot === 'A' && capture.directEnabled);
+    els.directB.classList.toggle('show', capture?.slot === 'B' && capture.directEnabled);
+    drawGraphs();
+  }
+
+  function instrumentReady(slot) {
+    const m = modeState();
+    if (state.currentMode === 'instrument') return (slot === 'A' ? m.instrumentA : m.instrumentB).trim().length > 0;
+    return m.instrument.trim().length > 0;
+  }
+
+  async function enumerateMics(preferBuiltIn = false) {
+    if (!navigator.mediaDevices?.enumerateDevices) {
+      els.micSelect.innerHTML = '<option>마이크 없음</option>';
+      els.micSelect.disabled = true;
+      return;
+    }
+    try {
+      const devices = (await navigator.mediaDevices.enumerateDevices()).filter(d => d.kind === 'audioinput');
+      const old = els.micSelect.value;
+      const stored = getMicPreference();
+      els.micSelect.innerHTML = '';
+      if (!devices.length) {
+        const option = document.createElement('option');
+        option.value = '';
+        option.textContent = '마이크 없음';
+        els.micSelect.appendChild(option);
+        els.micSelect.disabled = true;
+        return;
+      }
+      els.micSelect.disabled = false;
+      devices.forEach((d, i) => {
+        const option = document.createElement('option');
+        option.value = d.deviceId;
+        option.textContent = d.label || `마이크 ${i + 1}`;
+        els.micSelect.appendChild(option);
+      });
+      const ids = new Set(devices.map(d => d.deviceId));
+      let target = ids.has(old) ? old : (ids.has(stored) ? stored : '');
+      if (!target && preferBuiltIn) {
+        const builtIn = devices.find(d => /built.?in|macbook|internal|내장/i.test(d.label));
+        if (builtIn) target = builtIn.deviceId;
+      }
+      if (!target) target = devices[0].deviceId;
+      els.micSelect.value = target;
+      saveMicPreference();
+    } catch (_) {
+      els.micSelect.innerHTML = '<option>마이크 없음</option>';
+      els.micSelect.disabled = true;
+    }
+  }
+
+  async function startMic() {
+    cancelCapture('');
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setStatus('마이크를 사용할 수 없습니다', true);
+      return false;
+    }
+    setStatus('마이크 연결 중');
+    await stopMic(false);
+    const selected = els.micSelect.value;
+    const baseAudio = {
+      autoGainControl: false,
+      noiseSuppression: false,
+      echoCancellation: false
+    };
+    const constraints = selected
+      ? { audio: { ...baseAudio, deviceId: { exact: selected } } }
+      : { audio: baseAudio };
+    try {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia(constraints);
+      } catch (firstError) {
+        if (selected) stream = await navigator.mediaDevices.getUserMedia({ audio: baseAudio });
+        else throw firstError;
+      }
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) throw new Error('no-audio-context');
+      audioContext = new AudioCtx({ latencyHint: 'interactive' });
+      if (audioContext.state === 'suspended') await audioContext.resume();
+      sourceNode = audioContext.createMediaStreamSource(stream);
+      analyser = audioContext.createAnalyser();
+      analyser.fftSize = 4096;
+      analyser.smoothingTimeConstant = 0;
+      sourceNode.connect(analyser);
+      const track = stream.getAudioTracks()[0];
+      const settings = track?.getSettings?.() || {};
+      currentDeviceId = settings.deviceId || selected || '';
+      currentDeviceLabel = track?.label || '';
+      isMicOn = true;
+      noiseSamples = [];
+      noiseStart = performance.now();
+      noiseRms = 0.0025;
+      els.micOn.disabled = true;
+      els.micOff.disabled = false;
+      els.micOn.classList.add('mic-on');
+      await enumerateMics(true);
+      if (currentDeviceId && [...els.micSelect.options].some(o => o.value === currentDeviceId)) {
+        els.micSelect.value = currentDeviceId;
+        saveMicPreference();
+      }
+      track?.addEventListener?.('ended', () => {
+        cancelCapture('마이크를 사용할 수 없습니다');
+        stopMic(false);
+      }, { once: true });
+      setStatus('');
+      return true;
+    } catch (err) {
+      await stopMic(false);
+      const denied = err?.name === 'NotAllowedError' || err?.name === 'SecurityError';
+      setStatus(denied ? '마이크 권한을 확인하세요' : '마이크를 사용할 수 없습니다', true);
+      return false;
+    }
+  }
+
+  async function stopMic(showStatus = false) {
+    cancelCapture(showStatus ? '측정 취소' : '');
+    try { sourceNode?.disconnect(); } catch (_) {}
+    try { analyser?.disconnect(); } catch (_) {}
+    if (stream) stream.getTracks().forEach(t => { try { t.stop(); } catch (_) {} });
+    if (audioContext) { try { await audioContext.close(); } catch (_) {} }
+    stream = null;
+    sourceNode = null;
+    analyser = null;
+    audioContext = null;
+    isMicOn = false;
+    currentDeviceId = '';
+    currentDeviceLabel = '';
+    els.micOn.disabled = false;
+    els.micOff.disabled = true;
+    els.micOn.classList.remove('mic-on');
+  }
+
+  function currentRmsPeak(buffer) {
+    let sum = 0, peak = 0;
+    for (let i = 0; i < buffer.length; i++) {
+      const v = buffer[i];
+      sum += v * v;
+      const a = Math.abs(v);
+      if (a > peak) peak = a;
+    }
+    return { rms: Math.sqrt(sum / buffer.length), peak };
+  }
+
+  function yinPitch(buffer, sampleRate) {
+    const n = buffer.length;
+    if (n < 512 || !Number.isFinite(sampleRate) || sampleRate <= 0) return null;
+    const minFreq = 70;
+    const maxFreq = 1600;
+    const minTau = Math.max(2, Math.floor(sampleRate / maxFreq));
+    const maxTau = Math.min(Math.floor(sampleRate / minFreq), Math.floor(n / 2));
+    if (maxTau <= minTau + 2) return null;
+
+    const diff = new Float64Array(maxTau + 1);
+    const limit = n - maxTau;
+    for (let tau = 1; tau <= maxTau; tau++) {
+      let sum = 0;
+      for (let i = 0; i < limit; i++) {
+        const d = buffer[i] - buffer[i + tau];
+        sum += d * d;
+      }
+      diff[tau] = sum;
+    }
+
+    const cmnd = new Float64Array(maxTau + 1);
+    let running = 0;
+    cmnd[0] = 1;
+    for (let tau = 1; tau <= maxTau; tau++) {
+      running += diff[tau];
+      cmnd[tau] = running > 0 ? diff[tau] * tau / running : 1;
+    }
+
+    const threshold = 0.13;
+    let tauEstimate = -1;
+    for (let tau = minTau; tau <= maxTau; tau++) {
+      if (cmnd[tau] < threshold) {
+        while (tau + 1 <= maxTau && cmnd[tau + 1] < cmnd[tau]) tau++;
+        tauEstimate = tau;
+        break;
+      }
+    }
+    if (tauEstimate < 0) {
+      let best = Infinity, bestTau = -1;
+      for (let tau = minTau; tau <= maxTau; tau++) {
+        if (cmnd[tau] < best) { best = cmnd[tau]; bestTau = tau; }
+      }
+      if (bestTau < 0 || best > 0.26) return null;
+      tauEstimate = bestTau;
+    }
+
+    let refined = tauEstimate;
+    if (tauEstimate > minTau && tauEstimate < maxTau) {
+      const y0 = cmnd[tauEstimate - 1];
+      const y1 = cmnd[tauEstimate];
+      const y2 = cmnd[tauEstimate + 1];
+      const denom = 2 * (2 * y1 - y2 - y0);
+      if (Math.abs(denom) > 1e-12) refined = tauEstimate + (y2 - y0) / denom;
+    }
+    const frequency = sampleRate / refined;
+    if (!Number.isFinite(frequency) || frequency < minFreq || frequency > maxFreq) return null;
+    return { frequency, confidence: Math.max(0, 1 - cmnd[tauEstimate]) };
+  }
+
+  function stddev(values) {
+    if (!values.length) return Infinity;
+    const mean = values.reduce((a,b) => a+b, 0) / values.length;
+    const variance = values.reduce((s,v) => s + (v - mean) ** 2, 0) / values.length;
+    return Math.sqrt(variance);
+  }
+
+  function median(values) {
+    if (!values.length) return NaN;
+    const a = [...values].sort((x,y) => x-y);
+    const m = Math.floor(a.length / 2);
+    return a.length % 2 ? a[m] : (a[m-1] + a[m]) / 2;
+  }
+
+  function isStable(history) {
+    if (history.length < 6) return false;
+    const h = history.slice(-6);
+    const fs = h.map(x => x.frequency);
+    const rs = h.map(x => x.rms);
+    const fMean = fs.reduce((a,b) => a+b, 0) / fs.length;
+    const rMean = rs.reduce((a,b) => a+b, 0) / rs.length;
+    if (fMean <= 0 || rMean <= 0) return false;
+    return stddev(fs) / fMean < 0.015 && stddev(rs) / rMean < 0.18;
+  }
+
+  function requiredMicFor(slot) {
+    const m = modeState();
+    const other = slot === 'A' ? m.B : m.A;
+    return other?.deviceId || '';
+  }
+
+  async function beginCapture(slot) {
+    if (capture?.slot === slot) {
+      cancelCapture('측정 취소');
+      return;
+    }
+    if (capture) cancelCapture('측정 취소');
+    if (!instrumentReady(slot)) {
+      setStatus('다시 측정하세요', true);
+      return;
+    }
+    if (!isMicOn) {
+      const ok = await startMic();
+      if (!ok) return;
+    }
+
+    const required = requiredMicFor(slot);
+    const activeId = currentDeviceId || els.micSelect.value || '';
+    if (required && activeId && required !== activeId) {
+      setStatus('같은 마이크를 선택하세요', true);
+      return;
+    }
+
+    const id = ++captureSerial;
+    capture = {
+      id, slot,
+      mode: state.currentMode,
+      started: performance.now(),
+      history: [],
+      directEnabled: false,
+      timer: null,
+      lastValid: null,
+      lastFrame: null
+    };
+    setStatus('연주하세요');
+    renderMode();
+    startLiveWave(id);
+
+    capture.timer = window.setInterval(() => analyzeCapture(id), 110);
+    analyzeCapture(id);
+  }
+
+  function cancelCapture(statusText = '') {
+    if (!capture) {
+      if (statusText) setStatus(statusText, statusText !== '측정 취소');
+      return;
+    }
+    captureSerial++;
+    if (capture.timer) clearInterval(capture.timer);
+    stopLiveWave();
+    capture = null;
+    if (statusText) setStatus(statusText, statusText !== '측정 취소');
+    renderMode();
+  }
+
+  function analyzeCapture(id) {
+    if (!capture || capture.id !== id || !analyser || !audioContext) return;
+    const frame = new Float32Array(analyser.fftSize);
+    analyser.getFloatTimeDomainData(frame);
+    const { rms, peak } = currentRmsPeak(frame);
+
+    if (performance.now() - noiseStart < 800) {
+      noiseSamples.push(rms);
+      if (noiseSamples.length > 12) noiseSamples.shift();
+      const sorted = [...noiseSamples].sort((a,b) => a-b);
+      noiseRms = sorted.length ? sorted[Math.floor(sorted.length * 0.4)] : noiseRms;
+    }
+
+    const floor = Math.max(0.0035, Math.min(0.012, noiseRms * 2.8));
+    const clipped = peak >= 0.985;
+    if (clipped) {
+      capture.history.length = 0;
+      capture.lastValid = null;
+      setStatus('입력이 너무 큽니다', true);
+    } else if (rms < floor) {
+      capture.history.length = 0;
+      capture.lastValid = null;
+      setStatus('연주하세요');
+    } else {
+      const pitch = yinPitch(frame, audioContext.sampleRate);
+      if (pitch && pitch.confidence >= 0.72) {
+        const sample = { frequency: pitch.frequency, rms, peak, confidence: pitch.confidence };
+        capture.history.push(sample);
+        if (capture.history.length > 12) capture.history.shift();
+        capture.lastValid = sample;
+        capture.lastFrame = frame;
+        setStatus('측정 중');
+        if (isStable(capture.history)) {
+          finishCapture(id, false);
+          return;
+        }
+      } else {
+        capture.history.length = 0;
+        capture.lastValid = null;
+        setStatus('측정 중');
+      }
+    }
+
+    if (capture && capture.id === id && performance.now() - capture.started >= 5000 && !capture.directEnabled) {
+      capture.directEnabled = true;
+      renderMode();
+    }
+  }
+
+  function representativeWave(frame, sampleRate) {
+    const maxSamples = Math.min(frame.length, Math.max(128, Math.round(sampleRate * 0.040)));
+    const start = Math.max(0, frame.length - maxSamples);
+    return Array.from(frame.slice(start));
+  }
+
+  function finishCapture(id, manual) {
+    if (!capture || capture.id !== id || capture.mode !== state.currentMode || !audioContext) return;
+    const c = capture;
+    const valid = c.lastValid;
+    const frame = c.lastFrame;
+    const floor = Math.max(0.0035, Math.min(0.012, noiseRms * 2.8));
+    if (!valid || !frame || valid.rms < floor || valid.peak >= 0.985) {
+      setStatus('다시 측정하세요', true);
+      return;
+    }
+    if (!manual && !isStable(c.history)) return;
+    if (c.timer) clearInterval(c.timer);
+
+    const frequencies = c.history.length ? c.history.slice(-6).map(x => x.frequency) : [valid.frequency];
+    const result = {
+      frequency: Math.round(median(frequencies)),
+      waveform: representativeWave(frame, audioContext.sampleRate),
+      sampleRate: audioContext.sampleRate,
+      deviceId: currentDeviceId || els.micSelect.value || ''
+    };
+    state.modes[c.mode][c.slot] = result;
+    stopLiveWave();
+    capture = null;
+    saveState();
+    setStatus('포착 완료');
+    renderMode();
+  }
+
+  function directCapture(slot) {
+    if (!capture || capture.slot !== slot || !capture.directEnabled) return;
+    analyzeCapture(capture.id);
+    if (!capture) return;
+    const floor = Math.max(0.0035, Math.min(0.012, noiseRms * 2.8));
+    if (!capture.lastValid || capture.lastValid.rms < floor || capture.lastValid.peak >= 0.985) {
+      setStatus('다시 측정하세요', true);
+      return;
+    }
+    finishCapture(capture.id, true);
+  }
+
+  function startLiveWave(id) {
+    stopLiveWave(false);
+    liveWaveScale = 0.08;
+
+    const loop = () => {
+      if (!capture || capture.id !== id || !analyser || !audioContext) {
+        stopLiveWave();
+        return;
+      }
+
+      const full = new Float32Array(analyser.fftSize);
+      analyser.getFloatTimeDomainData(full);
+      const rangeMs = Number(modeState().range) || 20;
+      const count = Math.min(full.length, Math.max(2, Math.round(audioContext.sampleRate * rangeMs / 1000)));
+      const samples = full.slice(full.length - count);
+
+      let peak = 0;
+      for (let i = 0; i < samples.length; i++) peak = Math.max(peak, Math.abs(samples[i]));
+      const target = Math.max(0.03, Math.min(1, peak * 1.25));
+      if (target > liveWaveScale) liveWaveScale = target;
+      else liveWaveScale = Math.max(0.03, liveWaveScale * 0.985);
+
+      drawWave(els.liveCanvas, samples, liveWaveScale, rangeMs);
+      liveWaveRaf = requestAnimationFrame(loop);
+    };
+
+    liveWaveRaf = requestAnimationFrame(loop);
+  }
+
+  function stopLiveWave(clear = true) {
+    if (liveWaveRaf) cancelAnimationFrame(liveWaveRaf);
+    liveWaveRaf = 0;
+    if (clear) drawWave(els.liveCanvas, [], 0.08, Number(modeState().range) || 20);
+  }
+
+  function drawGraphs() {
+    const m = modeState();
+    const range = Number(m.range) || 20;
+    const arrays = [m.A, m.B].map(r => {
+      if (!r) return [];
+      const count = Math.min(r.waveform.length, Math.max(1, Math.round(r.sampleRate * range / 1000)));
+      return r.waveform.slice(-count);
+    });
+    let maxAbs = 0;
+    for (const arr of arrays) for (const v of arr) maxAbs = Math.max(maxAbs, Math.abs(v));
+    const yMax = Math.max(0.01, maxAbs * 1.08);
+    drawWave(els.canvasA, arrays[0], yMax, range);
+    drawWave(els.canvasB, arrays[1], yMax, range);
+  }
+
+  function drawWave(canvas, samples, yMax, rangeMs) {
+    const rect = canvas.getBoundingClientRect();
+    const dpr = Math.max(1, window.devicePixelRatio || 1);
+    const w = Math.max(10, Math.round(rect.width));
+    const h = Math.max(10, Math.round(rect.height));
+    const needW = Math.round(w * dpr), needH = Math.round(h * dpr);
+    if (canvas.width !== needW || canvas.height !== needH) {
+      canvas.width = needW; canvas.height = needH;
+    }
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, w, h);
+    ctx.fillStyle = '#fffaf0';
+    ctx.fillRect(0, 0, w, h);
+
+    const left = 14, right = 12, top = 12, bottom = 28;
+    const gw = Math.max(1, w - left - right);
+    const gh = Math.max(1, h - top - bottom);
+
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = '#eee7dc';
+    for (let i = 1; i < 4; i++) {
+      const x = left + gw * i / 4;
+      ctx.beginPath(); ctx.moveTo(x, top); ctx.lineTo(x, top + gh); ctx.stroke();
+    }
+    for (let i = 1; i < 4; i++) {
+      const y = top + gh * i / 4;
+      ctx.beginPath(); ctx.moveTo(left, y); ctx.lineTo(left + gw, y); ctx.stroke();
+    }
+    ctx.strokeStyle = '#d4cbbf';
+    const zeroY = top + gh / 2;
+    // x축(0 기준선)
+    ctx.beginPath(); ctx.moveTo(left, zeroY); ctx.lineTo(left + gw, zeroY); ctx.stroke();
+    // y축: 숫자 눈금 없이 세로 축선만 표시한다.
+    ctx.strokeStyle = '#9aa6a5';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.moveTo(left, top); ctx.lineTo(left, top + gh); ctx.stroke();
+
+    if (samples.length > 1) {
+      ctx.strokeStyle = '#ce5142';
+      ctx.lineWidth = 1.7;
+      ctx.beginPath();
+      const stride = Math.max(1, Math.floor(samples.length / Math.max(1, gw * 1.5)));
+      let first = true;
+      for (let i = 0; i < samples.length; i += stride) {
+        const x = left + (i / (samples.length - 1)) * gw;
+        const y = zeroY - (samples[i] / yMax) * (gh * 0.46);
+        if (first) { ctx.moveTo(x, y); first = false; }
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+    }
+
+    ctx.fillStyle = '#5f6f72';
+    ctx.font = '12px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('시간(ms)', left + gw / 2, h - 8);
+    ctx.textAlign = 'left';
+    ctx.fillText('0', left, h - 8);
+    ctx.textAlign = 'right';
+    ctx.fillText(String(rangeMs), left + gw, h - 8);
+  }
+
+  async function submitWaveResult(payload) {
+    const response = await fetch('/api/submissions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!response.ok) throw new Error('submit');
+  }
+
+  function saveWaveImage() {
+    const m = modeState();
+    if (!m.A && !m.B) {
+      setStatus('다시 측정하세요', true);
+      return;
+    }
+    const groupNumber = Number(state.groupNumber);
+    if (!Number.isSafeInteger(groupNumber) || groupNumber < 1 || groupNumber > 99) {
+      setStatus('조를 입력하세요', true);
+      els.groupNumber.focus();
+      return;
+    }
+
+    // 현재 공통 축 설정이 반영된 그래프를 먼저 다시 그린다.
+    drawGraphs();
+
+    const submission = {
+      mode: state.currentMode,
+      range: m.range,
+      groupNumber,
+      instrument: m.instrument,
+      instrumentA: m.instrumentA,
+      instrumentB: m.instrumentB,
+      A: m.A,
+      B: m.B
+    };
+    const transfer = submitWaveResult(submission).then(() => true, () => false);
+
+    try {
+      const exportCanvas = document.createElement('canvas');
+      const width = 1400;
+      const margin = 54;
+      const gap = 30;
+      const panelWidth = Math.floor((width - margin * 2 - gap) / 2);
+      const graphHeight = 420;
+      const top = 105;
+      const bottom = 24;
+      const height = top + graphHeight + bottom;
+      exportCanvas.width = width;
+      exportCanvas.height = height;
+      const ctx = exportCanvas.getContext('2d');
+      if (!ctx) throw new Error('canvas');
+
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, width, height);
+
+      const labels = MODES[state.currentMode].labels;
+      const canvases = [els.canvasA, els.canvasB];
+      const xs = [margin, margin + panelWidth + gap];
+
+      ctx.fillStyle = '#172f38';
+      ctx.font = '700 28px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+      ctx.textAlign = 'left';
+      const modeName = state.currentMode === 'strength' ? '세기' : state.currentMode === 'pitch' ? '높낮이' : '악기 종류';
+      ctx.fillText(`${modeName} · ${m.range} ms`, margin, 46);
+
+      for (let i = 0; i < 2; i++) {
+        const x = xs[i];
+        ctx.fillStyle = '#172f38';
+        ctx.font = '700 22px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText(labels[i], x, 84);
+
+        ctx.fillStyle = '#fffaf0';
+        ctx.fillRect(x, top, panelWidth, graphHeight);
+        ctx.strokeStyle = '#d8cec2';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x, top, panelWidth, graphHeight);
+
+        // 화면에 표시 중인 canvas 자체를 복사하므로 A/B 공통 y축과 시간축이 그대로 유지된다.
+        if (canvases[i].width > 0 && canvases[i].height > 0) {
+          ctx.drawImage(canvases[i], x + 2, top + 2, panelWidth - 4, graphHeight - 4);
+        }
+
+      }
+
+      const safeInstrument = (() => {
+        if (state.currentMode === 'instrument') {
+          const a = (m.instrumentA || '악기A').trim();
+          const b = (m.instrumentB || '악기B').trim();
+          return `${a}-${b}`;
+        }
+        return (m.instrument || '악기').trim();
+      })().replace(/[\\/:*?"<>|\s]+/g, '_').slice(0, 40);
+      const filename = `파형_${modeName}_${safeInstrument}_${m.range}ms.png`;
+
+      exportCanvas.toBlob(async blob => {
+        if (!blob) {
+          setStatus('다시 측정하세요', true);
+          return;
+        }
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        if (await transfer) {
+          setStatus('파형을 저장하고 선생님 화면으로 전송했습니다');
+        } else {
+          setStatus('파형은 저장했지만 선생님 화면으로 전송하지 못했습니다', true);
+        }
+      }, 'image/png');
+    } catch (_) {
+      setStatus('다시 측정하세요', true);
+    }
+  }
+
+  function updateInstrumentState() {
+    const m = modeState();
+    m.instrument = els.instrumentName.value;
+    m.instrumentA = els.instrumentA.value;
+    m.instrumentB = els.instrumentB.value;
+    saveState();
+  }
+
+  function updateGroupState(event) {
+    const value = Number(event.target.value);
+    state.groupNumber = Number.isSafeInteger(value) && value >= 1 && value <= 99 ? String(value) : '';
+    els.groupNumber.value = state.groupNumber;
+    saveState();
+  }
+
+  els.tabs.forEach(btn => btn.addEventListener('click', () => {
+    if (btn.dataset.mode === state.currentMode) return;
+    cancelCapture('측정 취소');
+    state.currentMode = btn.dataset.mode;
+    saveState();
+    setStatus('');
+    renderMode();
+  }));
+
+  [els.instrumentName, els.instrumentA, els.instrumentB].forEach(el => el.addEventListener('input', updateInstrumentState));
+  els.groupNumber.addEventListener('input', updateGroupState);
+  els.observation.addEventListener('input', () => {
+    modeState().observation = els.observation.value;
+    saveState();
+  });
+  els.timeRange.addEventListener('change', () => {
+    modeState().range = Number(els.timeRange.value);
+    saveState();
+    drawGraphs();
+    if (!capture) stopLiveWave();
+  });
+
+  els.saveWave.addEventListener('click', saveWaveImage);
+
+  els.measureA.addEventListener('click', () => beginCapture('A'));
+  els.measureB.addEventListener('click', () => beginCapture('B'));
+  els.directA.addEventListener('click', () => directCapture('A'));
+  els.directB.addEventListener('click', () => directCapture('B'));
+  els.micOn.addEventListener('click', startMic);
+  els.micOff.addEventListener('click', () => stopMic(true));
+  els.refreshMics.addEventListener('click', async () => {
+    cancelCapture('');
+    await enumerateMics(true);
+    setStatus('');
+  });
+  els.micSelect.addEventListener('change', async () => {
+    saveMicPreference();
+    cancelCapture('측정 취소');
+    if (isMicOn) await startMic();
+  });
+
+  els.reset.addEventListener('click', () => {
+    if (!window.confirm('모든 측정 내용을 초기화할까요?')) return;
+    cancelCapture('');
+    const mode = state.currentMode;
+    state = defaultState();
+    state.currentMode = mode;
+    saveState();
+    setStatus('');
+    renderMode();
+  });
+
+  window.addEventListener('beforeunload', () => {
+    try { stream?.getTracks().forEach(t => t.stop()); } catch (_) {}
+  });
+
+  if (navigator.mediaDevices?.addEventListener) {
+    navigator.mediaDevices.addEventListener('devicechange', async () => {
+      const selectedBefore = els.micSelect.value;
+      await enumerateMics(true);
+      const stillExists = [...els.micSelect.options].some(o => o.value === selectedBefore);
+      if (!stillExists && selectedBefore) {
+        cancelCapture('마이크를 사용할 수 없습니다');
+        if (isMicOn) await stopMic(false);
+      }
+    });
+  }
+
+  if ('ResizeObserver' in window) {
+    resizeObserver = new ResizeObserver(() => {
+      drawGraphs();
+      if (!capture) stopLiveWave();
+    });
+    resizeObserver.observe(els.canvasA.parentElement);
+    resizeObserver.observe(els.canvasB.parentElement);
+    resizeObserver.observe(els.liveCanvas.parentElement);
+  } else {
+    window.addEventListener('resize', () => { drawGraphs(); if (!capture) stopLiveWave(); });
+  }
+
+  renderMode();
+  stopLiveWave();
+  enumerateMics(false);
+})();
+</script>
+</body>
+</html>

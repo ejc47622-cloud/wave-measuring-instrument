@@ -1,0 +1,621 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>활동 1 소리 비교 · 선생님</title>
+<style>
+  :root {
+    --bg: #f6f1e7;
+    --panel: rgba(255, 250, 240, 0.86);
+    --line: rgba(23, 47, 56, 0.18);
+    --line-strong: rgba(23, 47, 56, 0.28);
+    --text: #172f38;
+    --muted: #5f6f72;
+    --coral: #ef705c;
+    --coral-dark: #ce5142;
+    --cream: #fffaf0;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { min-height: 100%; }
+  body {
+    margin: 0;
+    background:
+      radial-gradient(circle at 14% 3%, rgba(239, 112, 92, 0.13), transparent 26rem),
+      linear-gradient(rgba(23, 47, 56, 0.035) 1px, transparent 1px),
+      var(--bg);
+    background-size: auto, 100% 32px, auto;
+    color: var(--text);
+    font-family: "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    height: 72px;
+    display: flex;
+    align-items: center;
+    padding-left: max(24px, calc((100vw - 1680px) / 2));
+    padding-right: max(24px, calc((100vw - 1680px) / 2));
+    border-bottom: 1px solid var(--line);
+    background: rgba(246, 241, 231, 0.82);
+    backdrop-filter: blur(14px);
+    font-size: 18px;
+    font-weight: 850;
+    letter-spacing: -0.035em;
+  }
+
+  header::before {
+    content: "";
+    width: 36px;
+    height: 36px;
+    margin-right: 11px;
+    flex: 0 0 36px;
+    border-radius: 50%;
+    background: var(--text);
+  }
+
+  header::after {
+    content: "∿";
+    position: absolute;
+    left: max(32px, calc((100vw - 1680px) / 2 + 8px));
+    top: 18px;
+    width: 20px;
+    color: var(--bg);
+    font-family: Georgia, serif;
+    font-size: 24px;
+    line-height: 34px;
+    text-align: center;
+    pointer-events: none;
+  }
+
+  .student-link {
+    position: absolute;
+    left: max(24px, calc((100vw - 1680px) / 2));
+    top: 18px;
+    z-index: 2;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+  }
+
+  .student-link:focus-visible {
+    outline: 3px solid rgba(239, 112, 92, .32);
+    outline-offset: 3px;
+  }
+
+  main {
+    width: min(1680px, calc(100% - 32px));
+    margin: 0 auto;
+    padding: 18px 0 28px;
+  }
+
+  .top-panel {
+    min-height: 76px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 16px 18px;
+    border: 1px solid var(--line);
+    border-radius: 22px;
+    background: var(--panel);
+    box-shadow: 0 18px 46px rgba(23, 47, 56, 0.075);
+    backdrop-filter: blur(12px);
+  }
+
+  .top-title {
+    font-size: 20px;
+    font-weight: 900;
+    letter-spacing: -0.04em;
+  }
+
+  .status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 800;
+  }
+
+  .status-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--coral);
+    box-shadow: 0 0 0 4px rgba(239, 112, 92, 0.12);
+  }
+
+  .results {
+    margin-top: 14px;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .empty {
+    grid-column: 1 / -1;
+    min-height: 390px;
+    display: grid;
+    place-items: center;
+    padding: 28px;
+    border: 1px solid var(--line);
+    border-radius: 22px;
+    background: var(--panel);
+    box-shadow: 0 18px 46px rgba(23, 47, 56, 0.075);
+    color: var(--muted);
+    text-align: center;
+    font-size: 15px;
+    font-weight: 800;
+  }
+
+  .result-card {
+    width: calc(100% - 458px);
+    min-width: 720px;
+    max-width: 100%;
+    padding: 16px;
+    border: 1px solid var(--line);
+    border-radius: 22px;
+    background: var(--panel);
+    box-shadow: 0 18px 46px rgba(23, 47, 56, 0.075);
+    backdrop-filter: blur(12px);
+  }
+
+  .result-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .result-mode {
+    font-size: 17px;
+    font-weight: 900;
+    letter-spacing: -0.035em;
+  }
+
+  .result-title-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .group-badge {
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: rgba(239, 112, 92, 0.13);
+    color: var(--coral-dark);
+    font-size: 13px;
+    font-weight: 900;
+    white-space: nowrap;
+  }
+
+  .result-meta {
+    margin-top: 4px;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 750;
+    line-height: 1.5;
+  }
+
+  .received-at {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 750;
+    white-space: nowrap;
+  }
+
+  .result-actions {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+  }
+
+  .delete-result {
+    min-height: 32px;
+    padding: 6px 11px;
+    border: 1px solid rgba(206, 81, 66, 0.42);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.5);
+    color: var(--coral-dark);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 850;
+    cursor: pointer;
+  }
+
+  .delete-result:hover:not(:disabled) {
+    border-color: var(--coral-dark);
+    background: rgba(239, 112, 92, 0.1);
+  }
+
+  .delete-result:focus-visible {
+    outline: 3px solid rgba(239, 112, 92, .25);
+    outline-offset: 2px;
+  }
+
+  .delete-result:disabled {
+    cursor: wait;
+    opacity: 0.55;
+  }
+
+  .wave-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .wave-card {
+    min-width: 0;
+    padding: 12px;
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    background: rgba(255,255,255,.48);
+  }
+
+  .wave-name {
+    margin-bottom: 9px;
+    font-size: 16px;
+    font-weight: 900;
+    letter-spacing: -0.03em;
+  }
+
+  .canvas-wrap {
+    height: 280px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: 15px;
+    background: var(--cream);
+  }
+
+  canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  .frequency {
+    min-height: 28px;
+    display: flex;
+    align-items: center;
+    margin-top: 8px;
+    color: var(--text);
+    font-size: 18px;
+    font-weight: 900;
+  }
+
+  @media (max-width: 1100px) {
+    .result-card {
+      width: calc(100% - 425px);
+      min-width: 480px;
+    }
+  }
+
+  @media (max-width: 950px) {
+    main { width: calc(100% - 24px); }
+    .result-card { width: 100%; min-width: 0; }
+    .wave-grid { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 660px) {
+    header { height: 64px; padding-left: 18px; padding-right: 18px; }
+    header::after { left: 26px; top: 14px; }
+    .student-link { left: 18px; top: 14px; }
+    main { padding-top: 10px; }
+    .top-panel { border-radius: 18px; padding: 14px; }
+    .received-at { display: none; }
+  }
+
+  @media (max-width: 560px) {
+    main { width: calc(100% - 16px); }
+    .wave-card { padding: 11px; border-radius: 16px; }
+  }
+</style>
+</head>
+<body>
+<header><a class="student-link" href="/student.html" aria-label="학생 화면으로 이동"></a>활동 1 소리 비교 · 선생님</header>
+<main>
+  <section class="top-panel">
+    <div class="top-title">학생 측정 결과</div>
+    <div class="status"><span class="status-dot"></span><span id="statusText">결과 수신 대기 중</span></div>
+  </section>
+
+  <section id="results" class="results">
+    <div id="empty" class="empty">학생이 파형 저장을 누르면 측정 결과가 여기에 표시됩니다.</div>
+  </section>
+</main>
+
+<script>
+(() => {
+  'use strict';
+
+  const CHANNEL_NAME = 'waveActivity1-results';
+  const STORAGE_EVENT_KEY = 'waveActivity1.teacherResult';
+  const resultsEl = document.getElementById('results');
+  const emptyEl = document.getElementById('empty');
+  const statusText = document.getElementById('statusText');
+  const seenIds = new Set();
+  const deletedIds = new Set();
+  let loading = false;
+  let latestServerId = 0;
+
+  function normalizePayload(raw) {
+    if (!raw || typeof raw !== 'object') return null;
+
+    const mode = ['strength', 'pitch', 'instrument'].includes(raw.mode) ? raw.mode : 'strength';
+    const range = [10, 20, 40].includes(Number(raw.range)) ? Number(raw.range) : 20;
+
+    const normalizeResult = (r) => {
+      if (!r || !Number.isFinite(Number(r.frequency)) || !Array.isArray(r.waveform) || !Number.isFinite(Number(r.sampleRate))) return null;
+      return {
+        frequency: Math.round(Number(r.frequency)),
+        waveform: r.waveform.map(Number).filter(Number.isFinite).slice(0, 8192),
+        sampleRate: Number(r.sampleRate)
+      };
+    };
+
+    const A = normalizeResult(raw.A);
+    const B = normalizeResult(raw.B);
+    if (!A && !B) return null;
+
+    return {
+      id: String(raw.id || `${Date.now()}-${Math.random().toString(36).slice(2)}`),
+      mode,
+      range,
+      groupNumber: Number.isSafeInteger(Number(raw.groupNumber)) && Number(raw.groupNumber) >= 1 && Number(raw.groupNumber) <= 99 ? Number(raw.groupNumber) : 0,
+      instrument: typeof raw.instrument === 'string' ? raw.instrument : '',
+      instrumentA: typeof raw.instrumentA === 'string' ? raw.instrumentA : '',
+      instrumentB: typeof raw.instrumentB === 'string' ? raw.instrumentB : '',
+      A,
+      B,
+      sentAt: Number.isFinite(Number(raw.sentAt)) ? Number(raw.sentAt) : Date.now()
+    };
+  }
+
+  function modeInfo(payload) {
+    if (payload.mode === 'pitch') {
+      return { name: '소리의 높낮이', labels: ['낮은 음', '높은 음'], instrument: payload.instrument || '악기' };
+    }
+    if (payload.mode === 'instrument') {
+      const a = payload.instrumentA || '악기 A';
+      const b = payload.instrumentB || '악기 B';
+      return { name: '악기 종류', labels: [a, b], instrument: `${a} / ${b}` };
+    }
+    return { name: '소리의 세기', labels: ['약하게', '세게'], instrument: payload.instrument || '악기' };
+  }
+
+  function receive(raw) {
+    const payload = normalizePayload(raw);
+    if (!payload || seenIds.has(payload.id) || deletedIds.has(payload.id)) return;
+    seenIds.add(payload.id);
+    emptyEl?.remove();
+    statusText.textContent = '결과 수신 중';
+    addResultCard(payload);
+  }
+
+  function addResultCard(payload) {
+    const info = modeInfo(payload);
+    const card = document.createElement('article');
+    card.className = 'result-card';
+
+    const head = document.createElement('div');
+    head.className = 'result-head';
+
+    const headLeft = document.createElement('div');
+    const titleRow = document.createElement('div');
+    titleRow.className = 'result-title-row';
+    const title = document.createElement('div');
+    title.className = 'result-mode';
+    title.textContent = info.name;
+
+    titleRow.appendChild(title);
+    if (payload.groupNumber > 0) {
+      const groupBadge = document.createElement('span');
+      groupBadge.className = 'group-badge';
+      groupBadge.textContent = `${payload.groupNumber}조`;
+      titleRow.appendChild(groupBadge);
+    }
+
+    const meta = document.createElement('div');
+    meta.className = 'result-meta';
+    meta.textContent = `${info.instrument} · ${payload.range} ms`;
+
+    headLeft.append(titleRow, meta);
+
+    const time = document.createElement('div');
+    time.className = 'received-at';
+    time.textContent = new Date(payload.sentAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+    const actions = document.createElement('div');
+    actions.className = 'result-actions';
+
+    const deleteButton = document.createElement('button');
+    deleteButton.type = 'button';
+    deleteButton.className = 'delete-result';
+    deleteButton.textContent = '삭제';
+    deleteButton.setAttribute('aria-label', `${info.name} 측정 결과 삭제`);
+    deleteButton.addEventListener('click', async () => {
+      if (!window.confirm('이 측정 결과를 삭제할까요?')) return;
+      deleteButton.disabled = true;
+      try {
+        const response = await fetch(`/api/submissions?id=${encodeURIComponent(payload.id)}`, { method: 'DELETE' });
+        if (!response.ok) throw new Error('delete');
+        deletedIds.add(payload.id);
+        card.remove();
+        if (!resultsEl.querySelector('.result-card')) resultsEl.append(emptyEl);
+        statusText.textContent = '결과를 삭제했습니다';
+      } catch (_) {
+        deleteButton.disabled = false;
+        statusText.textContent = '측정 결과를 삭제하지 못했습니다';
+      }
+    });
+
+    actions.append(time, deleteButton);
+    head.append(headLeft, actions);
+
+    const grid = document.createElement('div');
+    grid.className = 'wave-grid';
+
+    const cardA = makeWaveCard(info.labels[0], payload.A);
+    const cardB = makeWaveCard(info.labels[1], payload.B);
+    grid.append(cardA.el, cardB.el);
+
+    card.append(head, grid);
+    resultsEl.prepend(card);
+
+    requestAnimationFrame(() => {
+      drawPair(cardA.canvas, payload.A, cardB.canvas, payload.B, payload.range);
+    });
+  }
+
+  function makeWaveCard(label, result) {
+    const el = document.createElement('section');
+    el.className = 'wave-card';
+
+    const name = document.createElement('div');
+    name.className = 'wave-name';
+    name.textContent = label;
+
+    const wrap = document.createElement('div');
+    wrap.className = 'canvas-wrap';
+
+    const canvas = document.createElement('canvas');
+    wrap.appendChild(canvas);
+
+    const frequency = document.createElement('div');
+    frequency.className = 'frequency';
+    frequency.textContent = result ? `${result.frequency} Hz` : '';
+
+    el.append(name, wrap, frequency);
+    return { el, canvas };
+  }
+
+  function dataForRange(result, rangeMs) {
+    if (!result) return [];
+    const count = Math.min(result.waveform.length, Math.max(1, Math.round(result.sampleRate * rangeMs / 1000)));
+    return result.waveform.slice(-count);
+  }
+
+  function drawPair(canvasA, resultA, canvasB, resultB, rangeMs) {
+    const a = dataForRange(resultA, rangeMs);
+    const b = dataForRange(resultB, rangeMs);
+    let maxAbs = 0;
+    for (const v of a) maxAbs = Math.max(maxAbs, Math.abs(v));
+    for (const v of b) maxAbs = Math.max(maxAbs, Math.abs(v));
+    const yMax = Math.max(0.01, maxAbs * 1.08);
+    drawWave(canvasA, a, yMax, rangeMs);
+    drawWave(canvasB, b, yMax, rangeMs);
+  }
+
+  function drawWave(canvas, samples, yMax, rangeMs) {
+    const rect = canvas.getBoundingClientRect();
+    const dpr = Math.max(1, window.devicePixelRatio || 1);
+    const w = Math.max(10, Math.round(rect.width));
+    const h = Math.max(10, Math.round(rect.height));
+    canvas.width = Math.round(w * dpr);
+    canvas.height = Math.round(h * dpr);
+
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, w, h);
+    ctx.fillStyle = '#fffaf0';
+    ctx.fillRect(0, 0, w, h);
+
+    const left = 14, right = 12, top = 12, bottom = 28;
+    const gw = Math.max(1, w - left - right);
+    const gh = Math.max(1, h - top - bottom);
+
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = '#eee7dc';
+    for (let i = 1; i < 4; i++) {
+      const x = left + gw * i / 4;
+      ctx.beginPath(); ctx.moveTo(x, top); ctx.lineTo(x, top + gh); ctx.stroke();
+    }
+    for (let i = 1; i < 4; i++) {
+      const y = top + gh * i / 4;
+      ctx.beginPath(); ctx.moveTo(left, y); ctx.lineTo(left + gw, y); ctx.stroke();
+    }
+
+    const zeroY = top + gh / 2;
+    ctx.strokeStyle = '#d4cbbf';
+    ctx.beginPath(); ctx.moveTo(left, zeroY); ctx.lineTo(left + gw, zeroY); ctx.stroke();
+
+    ctx.strokeStyle = '#9aa6a5';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.moveTo(left, top); ctx.lineTo(left, top + gh); ctx.stroke();
+
+    if (samples.length > 1) {
+      ctx.strokeStyle = '#ce5142';
+      ctx.lineWidth = 1.7;
+      ctx.beginPath();
+      const stride = Math.max(1, Math.floor(samples.length / Math.max(1, gw * 1.5)));
+      let first = true;
+      for (let i = 0; i < samples.length; i += stride) {
+        const x = left + (i / (samples.length - 1)) * gw;
+        const y = zeroY - (samples[i] / yMax) * (gh * 0.46);
+        if (first) { ctx.moveTo(x, y); first = false; }
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+    }
+
+    ctx.fillStyle = '#5f6f72';
+    ctx.font = '12px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('시간(ms)', left + gw / 2, h - 8);
+    ctx.textAlign = 'left';
+    ctx.fillText('0', left, h - 8);
+    ctx.textAlign = 'right';
+    ctx.fillText(String(rangeMs), left + gw, h - 8);
+  }
+
+  async function loadServerResults() {
+    if (loading) return;
+    loading = true;
+    try {
+      const endpoint = latestServerId > 0 ? `/api/submissions?after=${latestServerId}` : '/api/submissions';
+      const response = await fetch(endpoint, { cache: 'no-store' });
+      if (!response.ok) throw new Error('load');
+      const data = await response.json();
+      const submissions = Array.isArray(data.submissions) ? data.submissions : [];
+      submissions
+        .slice()
+        .sort((a, b) => Number(a.sentAt) - Number(b.sentAt))
+        .forEach(receive);
+      for (const submission of submissions) {
+        const numericId = Number(submission.id);
+        if (Number.isSafeInteger(numericId)) latestServerId = Math.max(latestServerId, numericId);
+      }
+      if (seenIds.size === 0) statusText.textContent = '결과 수신 대기 중';
+    } catch (_) {
+      statusText.textContent = '측정 결과를 불러오지 못했습니다';
+    } finally {
+      loading = false;
+    }
+  }
+
+  // 같은 origin에서 실행되는 학생 화면이 BroadcastChannel로 결과를 보내면 즉시 수신한다.
+  if ('BroadcastChannel' in window) {
+    const channel = new BroadcastChannel(CHANNEL_NAME);
+    channel.addEventListener('message', event => receive(event.data));
+  }
+
+  // 같은 origin의 localStorage 이벤트 방식도 함께 지원한다.
+  window.addEventListener('storage', event => {
+    if (event.key !== STORAGE_EVENT_KEY || !event.newValue) return;
+    try { receive(JSON.parse(event.newValue)); } catch (_) {}
+  });
+
+  loadServerResults();
+  setInterval(loadServerResults, 2000);
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) loadServerResults();
+  });
+})();
+</script>
+</body>
+</html>
